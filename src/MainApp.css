@@ -104,6 +104,44 @@
   border-color: #6366f1;
 }
 
+.masterKeyModal{
+  /* display: none;  */
+  position: fixed;
+  z-index: 999; /* Make sure it's above other elements */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6); /* Semi-transparent background */
+  justify-content: center;
+  align-items: center;
+}
+
+.masterKeyPop{
+display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+
+
+}
+
+.masterkeyInput{
+
+     background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
+    width: 14rem;
+    height: 11rem;
+    display: flex
+;
+    flex-direction: column;
+    /* align-content: center; */
+    justify-content: center;
+    align-items: center;
+    border-radius: 26px;
+    padding: 15px;
+}
+
 /* Anime cards */
 
 .rendering-div{

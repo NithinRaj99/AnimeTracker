@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './MainApp.css';
-import { db, ref, push, onValue, remove, logout } from './firebase';
+import { db, ref, masterCode , push, onValue, remove, logout } from './firebase';
 import { update } from 'firebase/database';
 
 
@@ -15,6 +15,16 @@ function MainApp({ user }) {
   const [trending, setTrending] = useState([]);
   const [topAnime, setTopAnime] = useState([]);
   const [homeAnime, setHomeAnime] = useState([]);
+  const [masterKey, setMasterKey] = useState([]);
+  const [mastermode, setMastermode] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [masterKeyValue,setMasterKeyValue] =useState('');
+
+   
+
+     useEffect(() => {
+    setMasterKey(masterCode); // Runs only once after mount
+  }, []);
 
   // Fetch user's saved anime
   useEffect(() => {
@@ -32,18 +42,27 @@ function MainApp({ user }) {
   // Fetch trending and top anime
   useEffect(() => {
     const fetchTrending = async () => {
-      try {
-        const res = await axios.get('https://api.jikan.moe/v4/top/anime?filter=airing');
-        setTrending(res.data.data.slice(0, 10));
-      } catch (err) {
-        console.error('Error fetching trending:', err);
-      }
+       try {
+      // Generate a random page number between 1 and 1000
+      const randomPage = Math.floor(Math.random() * 60) + 1;
+
+      console.log(`Fetching random anime from page ${randomPage}...`);
+
+      const res = await axios.get(`https://api.jikan.moe/v4/anime?genres=12&page=${randomPage}`);
+
+      // Shuffle results and pick 10
+      const shuffled = res.data.data.sort(() => 0.5 - Math.random());
+      setTrending(shuffled.slice(0, 12));
+
+    } catch (error) {
+      console.error("Error fetching home anime:", error);
+    }
     };
 
     const fetchTopAnime = async () => {
       try {
         const res = await axios.get('https://api.jikan.moe/v4/top/anime?filter=bypopularity');
-        setTopAnime(res.data.data.slice(0, 10));
+        setTopAnime(res.data.data.slice(0, 24));
       } catch (err) {
         console.error('Error fetching top anime:', err);
       }
@@ -124,6 +143,25 @@ function MainApp({ user }) {
       console.error("Failed to update anime status:", error);
     }
   };
+//master controlls
+ const openMasterModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+ const toggleMasterMode =()=>{
+ setMastermode(!mastermode);
+
+ }
+const authMasterKey=()=>{
+
+  if(masterKeyValue==masterKey){
+    setMastermode(true);
+    console.log(masterKeyValue);
+    console.log(masterKey);
+    setMasterKeyValue('')
+
+  }
+}
+
 
   const isInList = (id, list) => list.some(item => String(item.id) === String(id));
   const renderAnimeList = (list, type) =>
@@ -188,8 +226,8 @@ function MainApp({ user }) {
     });
 
   // Home cards: no synopsis, just title + image + buttons
-  const renderHomeCards = (list) =>
-    list.map((anime) => {
+  const renderHomeCards = (list) => 
+     list.filter(anime => anime.genres?.[0]?.mal_id !== 12).map((anime) => {
       const isWatched = isInList(anime.mal_id, watched);
       const isWishlisted = isInList(anime.mal_id, wishlist);
       return (
@@ -224,18 +262,33 @@ function MainApp({ user }) {
       <div className="header">
         <h1>Anime Tracker</h1>
         <div className="user-info">
-          <span className="user-name">{user.displayName || user.email}</span>
+          <span onClick={() => { openMasterModal(); }}  className="user-name">{user.displayName || user.email}</span>
+          {mastermode&&<span onClick={() => { toggleMasterMode(); }}>Exit M-Mode</span>}
           <button onClick={logout}>Logout</button>
         </div>
       </div>
-
+      {isModalOpen && <div className='masterKeyModal'>
+        <div className='masterKeyPop'>
+          <div className='masterkeyInput'>
+        <div><h4>Enter master Key</h4></div>
+        <div><input
+              type="number"
+              value={masterKeyValue}
+              onChange={(e) => setMasterKeyValue(e.target.value)}
+              placeholder="Search Anime..."
+            /></div>
+        <button onClick={() => { openMasterModal(); authMasterKey(); }}>Auth</button>
+        <button onClick={() => { openMasterModal(); }}>Cancel</button>
+        </div>
+        </div>
+      </div>}
       <div className="tabs">
         <button onClick={() => { setTab('home'); fetchRandomHomeAnime(); }}>Home</button>
         <button onClick={() => setTab('search')}>Search</button>
         <button onClick={() => setTab('watched')}>Watched</button>
         <button onClick={() => setTab('wishlist')}>Wishlist</button>
-        {/* <button onClick={() => setTab('trending')}>Trending</button> */}
         <button onClick={() => setTab('top')}>Most Watched</button>
+        {mastermode && <button onClick={() => setTab('trending')}>&#128293;</button> }
       </div>
 
       {tab === 'home' && (
@@ -288,14 +341,18 @@ function MainApp({ user }) {
       {tab === 'trending' && (
         <div>
           <h2>Trending Anime</h2>
+          <div className='rendering-div'>
           {renderAnimeWithButtons(trending)}
+        </div>
         </div>
       )}
 
       {tab === 'top' && (
         <div>
           <h2>Most Watched / Popular Anime</h2>
+          <div className='rendering-div'>
           {renderAnimeWithButtons(topAnime)}
+        </div>
         </div>
       )}
     </div>

@@ -31,6 +31,8 @@ const db = getDatabase(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
+const masterCode=import.meta.env.VITE_MASTER_CODE;
+
 // Google login function
 export const signInWithGoogle = () => {
   return signInWithPopup(auth, provider);
@@ -41,4 +43,4 @@ export const logout = () => {
   return signOut(auth);
 };
 
-export { auth, db, ref, push, onValue, remove };
+export { auth, db, masterCode , ref, push, onValue, remove };
