@@ -41,7 +41,20 @@ function MainApp({ user }) {
 
   // Fetch trending and top anime
   useEffect(() => {
-    const fetchTrending = async () => {
+    const fetchTopAnime = async () => {
+      try {
+        const res = await axios.get('https://api.jikan.moe/v4/top/anime?filter=bypopularity');
+        setTopAnime(res.data.data.slice(0, 24));
+      } catch (err) {
+        console.error('Error fetching top anime:', err);
+      }
+    };
+
+    fetchTopAnime();
+  }, []);
+
+//fetching trendingH anime
+const fetchTrending = async () => {
        try {
       // Generate a random page number between 1 and 1000
       const randomPage = Math.floor(Math.random() * 60) + 1;
@@ -59,18 +72,6 @@ function MainApp({ user }) {
     }
     };
 
-    const fetchTopAnime = async () => {
-      try {
-        const res = await axios.get('https://api.jikan.moe/v4/top/anime?filter=bypopularity');
-        setTopAnime(res.data.data.slice(0, 24));
-      } catch (err) {
-        console.error('Error fetching top anime:', err);
-      }
-    };
-
-    fetchTrending();
-    fetchTopAnime();
-  }, []);
 
   // Fetch random anime for Home tab
  const fetchRandomHomeAnime = async () => {
@@ -93,6 +94,10 @@ function MainApp({ user }) {
 
   useEffect(() => {
     fetchRandomHomeAnime();
+  }, []);
+
+  useEffect(() => {
+     fetchTrending();
   }, []);
 
   const handleSearch = async () => {
@@ -260,11 +265,15 @@ const authMasterKey=()=>{
   return (
     <div className="app-container">
       <div className="header">
-        <h1>Anime Tracker</h1>
+        <div>
+        <div className='image-container'>
+          <img src="/Animetracker.png" alt="Logo" />
+        </div>
+        </div>
         <div className="user-info">
           <span onClick={() => { openMasterModal(); }}  className="user-name">{user.displayName || user.email}</span>
-          {mastermode&&<span onClick={() => { toggleMasterMode(); }}>Exit M-Mode</span>}
           <button onClick={logout}>Logout</button>
+          {mastermode&&<button className="master-mode-btn" onClick={() => { toggleMasterMode(); setTab('home'); }}>Exit M-Mode</button>}
         </div>
       </div>
       {isModalOpen && <div className='masterKeyModal'>
@@ -272,13 +281,15 @@ const authMasterKey=()=>{
           <div className='masterkeyInput'>
         <div><h4>Enter master Key</h4></div>
         <div><input
-              type="number"
+              type="text"
               value={masterKeyValue}
               onChange={(e) => setMasterKeyValue(e.target.value)}
-              placeholder="Search Anime..."
+              placeholder="Master Key ..."
             /></div>
+            <div className='masterKeyButtonDiv'>
         <button onClick={() => { openMasterModal(); authMasterKey(); }}>Auth</button>
         <button onClick={() => { openMasterModal(); }}>Cancel</button>
+        </div>
         </div>
         </div>
       </div>}
@@ -288,7 +299,7 @@ const authMasterKey=()=>{
         <button onClick={() => setTab('watched')}>Watched</button>
         <button onClick={() => setTab('wishlist')}>Wishlist</button>
         <button onClick={() => setTab('top')}>Most Watched</button>
-        {mastermode && <button onClick={() => setTab('trending')}>&#128293;</button> }
+        {mastermode && <button onClick={() => {setTab('trending');  fetchTrending();}}>&#128293;</button> }
       </div>
 
       {tab === 'home' && (
